@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  # Banco de dados PostgreSQL
+  db:
+    image: postgres:15               # Imagem oficial do Postgres
+    container_name: postgres_db
+    restart: unless-stopped          # Reinicia automaticamente se o container cair
+    env_file:
+      - .env                        # Variáveis de ambiente (usuário, senha, DB)
+    ports:
+      - "5432:5432"                 # Porta do host mapeada para o container
+    volumes:
+      - db_data:/var/lib/postgresql/data  # Persistência dos dados
+      - ./db/init:/docker-entrypoint-initdb.d  # Scripts de inicialização
+    healthcheck:                     # Checa se o Postgres está pronto
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Flask
+  backend:
+    build: ./backend                 # Dockerfile do backend
+    container_name: backend_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "5000:5000"                 # Porta do backend
+    depends_on:
+      db:
+        condition: service_healthy   # Espera o banco estar pronto antes de iniciar
+
+  # Frontend estático com Nginx
+  frontend:
+    image: nginx:alpine              # Servidor leve para arquivos HTML/CSS/JS
+    container_name: frontend_app
+    restart: unless-stopped
+    ports:
+      - "8080:80"                     # Porta do host mapeada para porta 80 do Nginx
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro  # Monta a pasta do frontend, read-only
+
+# Volumes persistentes
+volumes:
+  db_data:
