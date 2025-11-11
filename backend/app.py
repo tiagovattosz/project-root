@@ -3,13 +3,20 @@ from flask_cors import CORS
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from models import Base, Post
+from os import getenv
 import os
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:8080"])
+
+frontend_url = getenv("FRONTEND_URL", "*")  # permite definir a URL depois
+CORS(app, origins=[frontend_url])
+
 
 # Configurações do banco via variáveis de ambiente
 DB_URL = os.environ.get("DATABASE_URL")
+if not DB_URL:
+    raise RuntimeError("❌ A variável DATABASE_URL não está definida!")
+
 engine = create_engine(DB_URL)
 SessionLocal = sessionmaker(bind=engine)
 
