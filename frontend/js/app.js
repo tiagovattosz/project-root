@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000/posts";
+const API_URL = "https://project-root-n045.onrender.com/posts";
 
 const postsList = document.getElementById("postsList");
 const postForm = document.getElementById("postForm");
